@@ -1,0 +1,30 @@
+<html>
+<body>
+<h1>Example app</h1>
+
+{% for talk in talks %}
+  {% if forloop.first %}
+    <h2>{{ talks.count }} talks</h2>
+  {% endif %}
+  
+  <div>
+    <p><strong>{{ talk.topic }}</strong>
+    &ndash; {{ talk.when|date:"j F Y" }}<br/>
+    Duration: {{ talk.duration }}h<br/>
+    Tags: {{ talk.tags|join:", " }}<br/>
+    <a href="{% url delete_talk talk.pk %}">delete</a>
+    </p>
+  </div>
+
+{% empty %}
+  <p><em>No talks added yet</em></p>
+{% endfor %}
+
+<hr/>
+<form action="." method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="+ Add talk"/>
+</form>
+</body>
+</html>
