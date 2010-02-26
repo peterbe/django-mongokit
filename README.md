@@ -7,7 +7,8 @@ License: New BSD License
 Bridging Django to MongoDB with the MongoKit ODM
 ------------------------------------------------
 
-The purpose of this module is to make it easy to use MongoKit to
+The purpose of this module is to make it easy to use
+[MongoKit](http://bitbucket.org/namlook/mongokit/wiki/Home) to
 define your models for Django if you prefer to use MongoDB instead of
 a relational database. This kit takes care of the boilerplate and
 makes your MongoKit documents work better with Django as it defines a
@@ -20,6 +21,23 @@ Installation
 
 Usage/Configuration
 -------------------
+
+First of all you need to define a name of the database and but that
+into your `settings.DATABASES` directive. Here's an example:
+
+        DATABASES = {
+            'default': {
+                'ENGINE': 'sqlite3', 
+                'NAME': 'example-sqlite3.db',
+            },
+            'mongodb': {
+                'ENGINE': 'django_mongokit.mongodb',
+                'NAME': 'example',
+            },
+        }
+
+Note that `default` and `mongodb` are mandatory keys in this settings.
+What you can change is the `NAME` part under `DATABASES['mongodb']`.
 
 In Django, you might be used to doing something like this:
 
