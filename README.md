@@ -49,7 +49,7 @@ In Django, you might be used to doing something like this:
 	    
 Now, with `django_mongokit` you can do this:
 
-        from django_mongokit import DjangoDocument
+        from django_mongokit.document import DjangoDocument
 	
         class Talk(DjangoDocument):
 	    structure = {

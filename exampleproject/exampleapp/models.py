@@ -1,5 +1,5 @@
 import datetime
-from django_mongokit import DjangoDocument
+from django_mongokit.document import DjangoDocument
 
 # Create your models here.
 class Talk(DjangoDocument):
