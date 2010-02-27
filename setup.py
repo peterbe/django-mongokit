@@ -3,16 +3,15 @@
 from distutils.core import setup
 from pkg_resources import resource_string
 
-from django_mongokit import __version__
 
 
 setup(name='django-mongokit',
-      version=__version__,
+      version=resource_string(__name__, 'version.txt'),
       author="Peter Bengtsson",
       author_email="peter@fry-it.com",
       url="http://github.com/peterbe/django-mongokit",
       description='Bridging Django to MongoDB with the MongoKit ODM',
-      long_description=resource_string(__name__, 'README.md')
+      long_description=resource_string(__name__, 'README.md'),
       scripts=['bin/django-mongokit'],
       package_dir={'djangomongokitlib':'django-mongokitlib'},
       packages=['django_mongokit', 'django_mongokit.mongodb'],
