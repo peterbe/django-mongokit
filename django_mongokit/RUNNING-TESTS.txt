@@ -1,0 +1,12 @@
+To run the tests you need to have Django in the Python path and you
+need to have a settings file and this needs to be export as per example:
+
+        export DJANGO_SETTINGS_MODULE=test_settings
+	
+To be able to run the tests you need to have mongoDB running. Then you
+can simply run the tests by running:
+
+        python tests.py
+	
+	
+	

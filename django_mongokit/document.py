@@ -1,16 +1,19 @@
+import sys
 import re
 from mongokit.document import DocumentProperties, CallableMixin
 from mongokit import Document
 from django.db.models import signals
 model_names = []
 
+from shortcut import connection
+
 class _PK(object):
     attname = '_id'
 
 class _Meta(object):
     def __init__(self, model_name, verbose_name, verbose_name_plural,
-                 module_name='document_types', # XXX needed?
-                 app_label='done', #XXX needed?
+                 module_name=None, 
+                 app_label=None, 
                  ):
         self.model_name = model_name
         self.verbose_name = verbose_name and verbose_name or \
@@ -51,7 +54,12 @@ class DjangoDocumentMetaClass(DocumentProperties):
         verbose_name_plural = meta and getattr(meta, 'verbose_name_plural', None) or None
         meta = _Meta(name, verbose_name, verbose_name_plural)
 
-        #new_class.add_to_class('_meta', _Meta('X'))
+        model_module = sys.modules[new_class.__module__]
+        try:
+            meta.app_label = model_module.__name__.split('.')[-2]
+        except IndexError:
+            meta.app_label = model_module.__name__
+
         new_class._meta = meta
         return new_class
 
@@ -66,7 +74,8 @@ class DjangoDocument(Document):
     def _get_pk_val(self, meta=None):
         if not meta:
             meta = self._meta
-        return str(getattr(self, meta.pk.attname))
+        #return str(getattr(self, meta.pk.attname))
+        return str(self[meta.pk.attname])
     def _set_pk_val(self, value):
         raise ValueError("You can't set the ObjectId")
     pk = property(_get_pk_val, _set_pk_val)
@@ -81,10 +90,10 @@ class DjangoDocument(Document):
     def save(self, *args, **kwargs):
         signals.pre_save.send(sender=self.__class__, instance=self)
     
-        _id_before = getattr(self, '_id', None)
+        _id_before = '_id' in self and self['_id'] or None
         super(DjangoDocument, self).save(*args, **kwargs)
-        _id_after = getattr(self, '_id', None)
+        _id_after = '_id' in self and self['_id'] or None
 
         signals.post_save.send(sender=self.__class__, instance=self,
-                               created=not _id_before and _id_after)
+                               created=bool(not _id_before and _id_after))
 

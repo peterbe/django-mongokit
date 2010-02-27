@@ -7,21 +7,15 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
+from django_mongokit import connection, get_database
+
 from models import Talk
 from forms import TalkForm
 
-#DB_NAME = settings.DATABASES['mongodb']['NAME']
-#con = Connection()
-#con.register([Talk])
-from django.db import connections
-
-connection = connections['mongodb'].connection
-database = connection[settings.DATABASES['mongodb']['NAME']]
-
 
 def homepage(request):
-    connection.register([Talk])
-    collection = database[Talk.collection_name]
+    #connection.register([Talk])
+    collection = get_database(connection)[Talk.collection_name]
     talks = collection.Talk.find()
     talks.sort('when', -1)
     if request.method == "POST":
@@ -44,8 +38,7 @@ def homepage(request):
 
 
 def delete_talk(request, _id):
-    connection.register([Talk])
-    collection = database[Talk.collection_name]
+    collection = get_database(connection)[Talk.collection_name]
     talk = collection.Talk.one({"_id": ObjectId(_id)})
     talk.delete()
     return HttpResponseRedirect(reverse("homepage"))
