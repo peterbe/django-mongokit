@@ -4,3 +4,4 @@
 db
 .coverage
 htmlcov
+dist

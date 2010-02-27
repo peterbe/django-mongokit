@@ -13,6 +13,7 @@ setup(name='django-mongokit',
       description='Bridging Django to MongoDB with the MongoKit ODM',
       long_description=resource_string(__name__, 'README.md'),
       scripts=['bin/django-mongokit'],
+      include_package_data=True,
       package_dir={'djangomongokitlib':'django-mongokitlib'},
       packages=['django_mongokit', 'django_mongokit.mongodb'],
       classifiers=['Development Status :: 3 - Alpha', # remember to change this one day to '5 - Production/Stable'
