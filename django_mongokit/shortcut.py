@@ -14,3 +14,9 @@ connection = connections['mongodb'].connection
 def get_database(this_connection=None):
     connection = this_connection and this_connection or connections['mongodb'].connection
     return connection[settings.DATABASES['mongodb']['NAME']]
+
+
+def get_version():
+    import os
+    f = os.path.join(os.path.dirname(__file__), 'version.txt')
+    return open(f).read()
