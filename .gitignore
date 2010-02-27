@@ -4,4 +4,5 @@
 db
 .coverage
 htmlcov
-dist
+dist/
+build/

@@ -6,7 +6,7 @@ from pkg_resources import resource_string
 
 
 setup(name='django-mongokit',
-      version=resource_string(__name__, 'version.txt'),
+      version=resource_string(__name__, 'django_mongokit/version.txt'),
       author="Peter Bengtsson",
       author_email="peter@fry-it.com",
       url="http://github.com/peterbe/django-mongokit",

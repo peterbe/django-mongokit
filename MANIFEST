@@ -1,0 +1,12 @@
+INSTALL
+LICENSE
+README.md
+setup.py
+django_mongokit/version.txt
+django_mongokit/__init__.py
+django_mongokit/document.py
+django_mongokit/shortcut.py
+django_mongokit/test_settings.py
+django_mongokit/tests.py
+django_mongokit/mongodb/__init__.py
+django_mongokit/mongodb/base.py
