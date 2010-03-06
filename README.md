@@ -17,7 +17,7 @@ makes your MongoKit documents work better with Django as it defines a
 Installation
 ------------
 
-`pip/easy_install django-mongokit` (XXX UPLOAD TO PYPI)
+`pip/easy_install django-mongokit`
 
 Usage/Configuration
 -------------------
