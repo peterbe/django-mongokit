@@ -1,6 +1,6 @@
+import os
 import unittest
 from document import DjangoDocument
-from shortcut import connection
 
 class Talk(DjangoDocument):
     structure = {'topic': unicode}
@@ -20,11 +20,13 @@ class LighteningTalk(Talk):
     structure = {'has_slides': bool}
     default_values = {'has_slides': True}
     
-connection.register([Talk, CrazyOne, CrazyTwo, LighteningTalk])
     
 class DocumentTest(unittest.TestCase):
     
     def setUp(self):
+        from shortcut import connection
+        connection.register([Talk, CrazyOne, CrazyTwo, LighteningTalk])
+        
         self.connection = connection
         self.database = connection['django_mongokit_test_database']
         
@@ -146,10 +148,117 @@ class DocumentTest(unittest.TestCase):
         self.assertTrue('post_save not created' in _fired)
         
         
-            
-            
+class ShortcutTestCase(unittest.TestCase):
+    
+    def test_get_database(self):
+        from shortcut import get_database, connection
+        db = get_database()
+        self.assertEqual(db.connection, connection)
 
+        db = get_database(connection)
+        self.assertEqual(db.connection, connection)
         
+    def test_get_version(self):
+        from shortcut import get_version
+        version = get_version()
+        self.assertEqual(version,
+                         open(os.path.join(os.path.dirname(__file__), 
+                         'version.txt')).read())
+
+
+class MongoDBBaseTestCase(unittest.TestCase):
+    
+    def test_load_backend(self):
+        from django.db import connections
+        self.assertTrue('mongodb' in connections)
+
+        from django.db.utils import load_backend
+        backend = load_backend('django_mongokit.mongodb')
+        self.assertTrue(backend is not None)
+        
+    def test_database_wrapper(self):
+        from django.db import connections
+        connection = connections['mongodb']
+        self.assertTrue(hasattr(connection, 'connection')) # stupid name!
+        # needed attribute
+        self.assertTrue(hasattr(connection.connection, 'autocommit'))
+        
+    def test_create_test_database(self):
+        from django.conf import settings
+        assert 'mongodb' in settings.DATABASES
+        old_database_name = settings.DATABASES['mongodb']['NAME']
+        assert 'test_' not in old_database_name
+        # pretend we're the Django 'test' command
+        
+        from django.db import connections
+        connection = connections['mongodb']
+        
+        connection.creation.create_test_db()
+        test_database_name = settings.DATABASES['mongodb']['NAME']
+        self.assertTrue('test_' in test_database_name)
+        
+        from mongokit import Connection
+        con = Connection()
+        # the test database isn't created till it's needed
+        self.assertTrue(test_database_name not in con.database_names())
+        
+        # creates it
+        db = con[settings.DATABASES['mongodb']['NAME']]
+        coll = db.test_collection_name
+        # do a query on the collection to force the database to be created
+        list(coll.find())
+        test_database_name = settings.DATABASES['mongodb']['NAME']
+        self.assertTrue(test_database_name in con.database_names())
+        
+        connection.creation.destroy_test_db(old_database_name)
+        self.assertTrue('test_' not in settings.DATABASES['mongodb']['NAME'])
+        self.assertTrue(test_database_name not in con.database_names())
+        
+        # this should work even though it doesn't need to do anything
+        connection.close()
+        
+    def test_create_test_database_by_specific_bad_name(self):
+        from django.conf import settings
+        assert 'mongodb' in settings.DATABASES
+        settings.DATABASES['mongodb']['TEST_NAME'] = "muststartwith__test_"
+        old_database_name = settings.DATABASES['mongodb']['NAME']
+        from django.db import connections
+        connection = connections['mongodb']
+        
+        # why doesn't this work?!?!
+        #from mongodb.base import DatabaseError
+        #self.assertRaises(DatabaseError, connection.creation.create_test_db)
+        self.assertRaises(Exception, connection.creation.create_test_db)
+        
+        
+    def test_create_test_database_by_specific_good_name(self):
+        from django.conf import settings
+        assert 'mongodb' in settings.DATABASES
+        settings.DATABASES['mongodb']['TEST_NAME'] = "test_mustard"
+        old_database_name = settings.DATABASES['mongodb']['NAME']
+        from django.db import connections
+        connection = connections['mongodb']
+        
+        connection.creation.create_test_db()
+        test_database_name = settings.DATABASES['mongodb']['NAME']
+        self.assertTrue('test_' in test_database_name)
+        
+        from mongokit import Connection
+        con = Connection()
+        # the test database isn't created till it's needed
+        self.assertTrue(test_database_name not in con.database_names())
+        
+        # creates it
+        db = con[settings.DATABASES['mongodb']['NAME']]
+        coll = db.test_collection_name
+        # do a query on the collection to force the database to be created
+        list(coll.find())
+        test_database_name = settings.DATABASES['mongodb']['NAME']
+        self.assertTrue(test_database_name in con.database_names())
+        
+        connection.creation.destroy_test_db(old_database_name)
+        self.assertTrue('test_mustard' not in settings.DATABASES['mongodb']['NAME'])
+        self.assertTrue(test_database_name not in con.database_names())
         
 if __name__ == '__main__':
     unittest.main()

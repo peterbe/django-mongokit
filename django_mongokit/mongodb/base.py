@@ -45,16 +45,16 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
     
     
     
-class MongoCursor(object):
-    latest_result = None
-    def execute(self, sql, params=None):
-        print "SQL Command"
-        print repr(sql)
-        print 
-        self.latest_result = None
-        
-    def fetchone(self):
-        return [self.latest_result]
+#class MongoCursor(object):
+#    latest_result = None
+#    def execute(self, sql, params=None):
+#        print "SQL Command"
+#        print repr(sql)
+#        print 
+#        self.latest_result = None
+#        
+#    def fetchone(self):
+#        return [self.latest_result]
 
 TEST_DATABASE_PREFIX = 'test_'
     
@@ -93,7 +93,11 @@ class DatabaseCreation(BaseDatabaseCreation):
         settings.DATABASES['mongodb']['NAME'] = old_database_name
         
     def _drop_database(self, database_name):
-        assert TEST_DATABASE_PREFIX in database_name # paranoia
+        if not database_name.startswith(TEST_DATABASE_PREFIX):
+            # paranoia
+            raise DatabaseError(
+              "Suspicous! Can't delete database unless it's prefixed by %s" % \
+              TEST_DATABASE_PREFIX)
         if database_name in self.connection.connection.database_names():
             # needs to be dropped
             self.connection.connection.drop_database(database_name)
@@ -122,9 +126,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.alias = alias
         
         self.connection = ConnectionWrapper()
-        
-    def _cursor(self):
-        return MongoCursor()
+ 
+# Experimenting with commenting this out
+#    def _cursor(self):
+#        return MongoCursor()
     
 
     def close(self):

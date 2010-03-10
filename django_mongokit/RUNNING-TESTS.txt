@@ -8,5 +8,14 @@ can simply run the tests by running:
 
         python tests.py
 	
-	
-	
+To run with coverage and reporting simple set the
+DJANGO_SETTINGS_MODULE and then run it like this:
+
+        coverage run tests.py
+	coverage report __init__.py document.py mongodb/__init__.py shortcut.py mongodb/base.py
+	coverage html
+	firefox htmlcov/index.html
+
+Alternatively you can just run the script:
+
+        ./test_with_coverage.sh

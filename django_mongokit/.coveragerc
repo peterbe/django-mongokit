@@ -1,0 +1,4 @@
+[report]
+exclude_lines =
+    def __repr__
+    if verbosity >= 1:
