@@ -11,8 +11,7 @@ connection = connections['mongodb'].connection
 # prepared and that changes settings.DATABASES automatically.
 # The net effect is that the way the tests are run nothing needs to be done 
 # differently as long as you use get_database()
-def get_database(this_connection=None):
-    connection = this_connection and this_connection or connections['mongodb'].connection
+def get_database(this_connection=connection):
     return connection[settings.DATABASES['mongodb']['NAME']]
 
 
