@@ -1,26 +1,27 @@
+from pprint import pprint
 from django.core.urlresolvers import reverse
 import datetime
 from django.test import TestCase
 from django.db import connections
 from django.conf import settings
 
+from django_mongokit import get_database
 from models import Talk
 
 class ExampleTest(TestCase):
     def setUp(self):
-        self.connection = connections['mongodb'].connection
-        self.database = self.connection[settings.DATABASES['mongodb']['NAME']]
-        
+        db = get_database()
+        assert 'test_' in db.name
+    
     def tearDown(self):
-        for name in self.database.collection_names():
+        for name in get_database().collection_names():
             if name not in ('system.indexes',):
-                self.database.drop_collection(name)
+                get_database().drop_collection(name)
 
         
     def test_creating_talk_basic(self):
         """test to create a Talk instance"""
-        self.connection.register([Talk])
-        collection = self.database[Talk.collection_name]
+        collection = get_database()[Talk.collection_name]
         talk = collection.Talk()
         talk.topic = u"Bla"
         talk.when = datetime.datetime.now()
@@ -58,8 +59,7 @@ class ExampleTest(TestCase):
         self.assertTrue('31 December 2010' in response.content)
         self.assertTrue('Tags: foo, bar' in response.content)
         
-        self.connection.register([Talk])
-        collection = self.database[Talk.collection_name]
+        collection = get_database()[Talk.collection_name]
         talk = collection.Talk.one()
         assert talk.topic == u"My Topic"
         delete_url = reverse('delete_talk', args=[str(talk._id)])

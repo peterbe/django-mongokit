@@ -7,7 +7,8 @@ from django.conf.urls.defaults import *
 urlpatterns = patterns('',
     # Example:
     (r'^exampleapp/', include('exampleapp.urls')),
-    (r'^exampleapp_sql/', include('exampleapp_sql.urls')),
+    (r'^exampleapp_sql/', include('exampleapp_sql.urls', namespace='sql',
+                                  app_name='exampleapp_sql')),
     (r'^benchmarker/', include('benchmarker.urls')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 

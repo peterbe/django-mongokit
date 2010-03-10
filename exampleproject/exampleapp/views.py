@@ -6,7 +6,8 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from django_mongokit import get_database
+from django_mongokit import get_database, connection
+
 
 from models import Talk
 from forms import TalkForm

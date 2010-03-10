@@ -7,3 +7,4 @@ htmlcov
 dist/
 build/
 example-sqlite3.db
+gorun_settings.py
