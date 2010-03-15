@@ -1,3 +1,4 @@
+{% load django11 %} {# ignore this if you're using Django 1.2 #}
 <html>
 <body>
 <h1>Example app</h1>
@@ -22,7 +23,10 @@
 
 <hr/>
 <form action="." method="post">
-{% csrf_token %}
+
+{# so template work with Django 1.1 and 1.2 #}
+{% if csrf_token %}{% csrf_token %}{% endif %}
+
 {{ form.as_p }}
 <input type="submit" value="+ Add talk"/>
 </form>

@@ -1,6 +1,7 @@
 """
-Half-dummy mongoDB backend for Django.
+MongoKit (MongoDB) backend for Django.
 """
+
 from mongokit import Connection
 
 from django.core.exceptions import ImproperlyConfigured
@@ -44,7 +45,8 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
     get_indexes = complain
     
     
-    
+ 
+# Needed for Django <1.2
 #class MongoCursor(object):
 #    latest_result = None
 #    def execute(self, sql, params=None):
@@ -62,18 +64,34 @@ class DatabaseCreation(BaseDatabaseCreation):
     def create_test_db(self, verbosity=1, autoclobber=False):
         # No need to create databases in mongoDB :)
         # but we can make sure that if the database existed is emptied
-    
-        if self.connection.settings_dict['TEST_NAME']:
+        
+        if self.connection.settings_dict.get('TEST_NAME'):
             test_database_name = self.connection.settings_dict['TEST_NAME']
-        else:
+        elif 'NAME' in self.connection.settings_dict:
             test_database_name = TEST_DATABASE_PREFIX + self.connection.settings_dict['NAME']
+        elif 'DATABASE_NAME' in self.connection.settings_dict:
+            if self.connection.settings_dict['DATABASE_NAME'].startswith(TEST_DATABASE_PREFIX):
+                # already been set up
+                # must be because this is called from a setUp() instead of something formal.
+                # suspect this Django 1.1
+                test_database_name = self.connection.settings_dict['DATABASE_NAME']
+            else:
+                test_database_name = TEST_DATABASE_PREFIX + \
+                  self.connection.settings_dict['DATABASE_NAME']
+        else:
+            raise ValueError("Name for test database not defined")
             
         # This is important. Here we change the settings so that all other code
         # things that the chosen database is now the test database. This means
         # that nothing needs to change in the test code for working with 
         # connections, databases and collections. It will appear the same as
-        # when working with non-test code. 
-        settings.DATABASES['mongodb']['NAME'] = test_database_name
+        # when working with non-test code.
+        try:
+            settings.DATABASES['mongodb']['NAME'] = test_database_name
+        except AttributeError:
+            settings.MONGO_DATABASE_NAME = test_database_name
+            
+        settings.DATABASE_SUPPORTS_TRANSACTIONS = False # MongoDB :)
         
         # In this phase it will only drop the database if it already existed
         # which could potentially happen if the test database was created but 
@@ -88,16 +106,25 @@ class DatabaseCreation(BaseDatabaseCreation):
         """
         if verbosity >= 1:
             print "Destroying test database '%s'..." % self.connection.alias
-        test_database_name = self.connection.settings_dict['NAME']
+        if 'DATABASE_NAME' in self.connection.settings_dict:
+            # Django <1.2
+            test_database_name = settings.MONGO_DATABASE_NAME #self.connection.settings_dict['DATABASE_NAME']
+        else:
+            test_database_name = self.connection.settings_dict['NAME']
         self._drop_database(test_database_name)
-        settings.DATABASES['mongodb']['NAME'] = old_database_name
+        
+        try:
+            settings.DATABASES['mongodb']['NAME'] = old_database_name
+        except AttributeError:
+            # Django <1.2
+            settings.MONGO_DATABASE_NAME = old_database_name
         
     def _drop_database(self, database_name):
         if not database_name.startswith(TEST_DATABASE_PREFIX):
             # paranoia
             raise DatabaseError(
-              "Suspicous! Can't delete database unless it's prefixed by %s" % \
-              TEST_DATABASE_PREFIX)
+              "Suspicous! Can't delete database (%r) unless it's prefixed by %s" % \
+              (database_name, TEST_DATABASE_PREFIX))
         if database_name in self.connection.connection.database_names():
             # needs to be dropped
             self.connection.connection.drop_database(database_name)
@@ -113,17 +140,22 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     autocommit = None # ignore 
     
     
-    def __init__(self, settings_dict, alias, *args, **kwargs):
+    def __init__(self, settings_dict, alias=None, # alias was added in Django 1.2
+                 *args, **kwargs):
         self.features = BaseDatabaseFeatures()
         self.ops = DatabaseOperations()
         self.client = DatabaseClient(self)
         self.creation = DatabaseCreation(self)
         self.introspection = DatabaseIntrospection(self)
-        self.validation = BaseDatabaseValidation(self)
+        try:
+            self.validation = BaseDatabaseValidation(self)
+        except TypeError:
+            # Django < 1.2
+            self.validation = BaseDatabaseValidation()
 
         settings_dict['SUPPORTS_TRANSACTIONS'] = False
         self.settings_dict = settings_dict
-        self.alias = alias
+        self.alias = alias and alias or settings_dict['DATABASE_NAME']
         
         self.connection = ConnectionWrapper()
  

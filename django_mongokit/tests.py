@@ -169,15 +169,23 @@ class ShortcutTestCase(unittest.TestCase):
 class MongoDBBaseTestCase(unittest.TestCase):
     
     def test_load_backend(self):
-        from django.db import connections
+        try:
+            from django.db import connections
+        except ImportError:
+            # Django <1.2
+            return # :(
+        
         self.assertTrue('mongodb' in connections)
-
         from django.db.utils import load_backend
         backend = load_backend('django_mongokit.mongodb')
         self.assertTrue(backend is not None)
         
     def test_database_wrapper(self):
-        from django.db import connections
+        try:
+            from django.db import connections
+        except ImportError:
+            # Django <1.2
+            return # :(
         connection = connections['mongodb']
         self.assertTrue(hasattr(connection, 'connection')) # stupid name!
         # needed attribute
@@ -185,7 +193,11 @@ class MongoDBBaseTestCase(unittest.TestCase):
         
     def test_create_test_database(self):
         from django.conf import settings
-        assert 'mongodb' in settings.DATABASES
+        try:
+            assert 'mongodb' in settings.DATABASES
+        except AttributeError:
+            # Django <1.2
+            return # :(
         old_database_name = settings.DATABASES['mongodb']['NAME']
         assert 'test_' not in old_database_name
         # pretend we're the Django 'test' command
@@ -219,7 +231,11 @@ class MongoDBBaseTestCase(unittest.TestCase):
         
     def test_create_test_database_by_specific_bad_name(self):
         from django.conf import settings
-        assert 'mongodb' in settings.DATABASES
+        try:
+            assert 'mongodb' in settings.DATABASES
+        except AttributeError:
+            # Django <1.2
+            return 
         settings.DATABASES['mongodb']['TEST_NAME'] = "muststartwith__test_"
         old_database_name = settings.DATABASES['mongodb']['NAME']
         from django.db import connections
@@ -233,7 +249,11 @@ class MongoDBBaseTestCase(unittest.TestCase):
         
     def test_create_test_database_by_specific_good_name(self):
         from django.conf import settings
-        assert 'mongodb' in settings.DATABASES
+        try:
+            assert 'mongodb' in settings.DATABASES
+        except AttributeError:
+            # Django <1.2
+            return 
         settings.DATABASES['mongodb']['TEST_NAME'] = "test_mustard"
         old_database_name = settings.DATABASES['mongodb']['NAME']
         from django.db import connections

@@ -107,3 +107,19 @@ Examples
 `django-mongokit` comes with an example project and an example app
 that does some basic things. It might be a good source of inspiration
 for how to use `django-mongokit` to look at this example app. 
+
+
+Django 1.1 (pre multi-db support)
+---------------------------------
+
+`django-mongokit` was built for Django 1.2 with the multi-db support
+but you can use `django-mongokit` in Django 1.1 (tested in Django
+1.1.1) as a secondary database. For example, you might want to
+continue running your application in MySQL/PosgreSQL/Oracle as it is
+but you then have a fast logging app that writes to MongoDB. The way
+difference from using Django 1.2 is to that you need to specify a
+setting called `MONGO_DATABASE_NAME` like this:
+
+        MONGO_DATABASE_NAME = "example"
+	
+	
