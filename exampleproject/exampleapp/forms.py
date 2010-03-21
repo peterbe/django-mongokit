@@ -1,11 +1,24 @@
+import datetime
+
 from django import forms
 
-class TalkForm(forms.Form):
-    topic = forms.CharField(max_length=250)
-    when = forms.DateField()
+from django_mongokit.forms import DocumentForm
+from models import Talk
+
+class TalkForm(DocumentForm):
+    
     tags = forms.CharField(max_length=250)
-    duration = forms.FloatField()
     
     def clean_tags(self):
-        tags = self.cleaned_data['tags']
-        return [x.strip() for x in tags.split(',') if x.strip()]
+        value = self.cleaned_data['tags']
+        return [tag.strip() for tag in value.split(',')]
+    
+    def clean_when(self):
+        w = self.cleaned_data['when']
+        when = datetime.datetime(w.year, w.month, w.day, 0,0,0)
+        return when
+    
+    class Meta:
+        document = Talk
+        fields = ['topic', 'when', 'tags', 'duration']
+

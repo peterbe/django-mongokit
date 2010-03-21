@@ -12,6 +12,8 @@ class Talk(DjangoDocument):
         'duration': float,
     }
     
+    required_fields = ['topic', 'when', 'duration']
+    
     use_dot_notation = True
     
 connection.register([Talk])    

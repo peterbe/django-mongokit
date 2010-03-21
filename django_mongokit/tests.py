@@ -279,6 +279,190 @@ class MongoDBBaseTestCase(unittest.TestCase):
         connection.creation.destroy_test_db(old_database_name)
         self.assertTrue('test_mustard' not in settings.DATABASES['mongodb']['NAME'])
         self.assertTrue(test_database_name not in con.database_names())
+
+#
+# DocumentForm tests follow
+#
+import datetime
+from django_mongokit.forms import DocumentForm
+from django_mongokit.forms import fields as mongokit_fields
+from django import forms
+
+class DetailedTalk(DjangoDocument):
+    """
+A detailed talk document for testing automated form creation.
+"""
+    structure = {
+        'created_on': datetime.datetime,
+        'topic': unicode,
+        'when': datetime.datetime,
+        'tags': list,
+        'duration': float,
+    }
+
+    default_values = {
+        'created_on': datetime.datetime.utcnow
+    }
+
+    required_fields = ['topic', 'when', 'duration']
+
+class BasicTalkForm(DocumentForm):
+    """
+    A basic form, without customized behavior.
+    """
+    class Meta:
+        document = DetailedTalk
+
+class BasicDocumentFormTest(unittest.TestCase):
+    "Test the basic form construction without customization"
+    def setUp(self):
+        from shortcut import connection
+        self.connection = connection
+        self.database = self.connection['django_mongokit_test_database']
         
+        self.now = datetime.datetime.utcnow()
+        self.form = BasicTalkForm(collection=self.database.test_collection)
+
+    def tearDown(self):
+        self.connection.drop_database('django_mongokit_test_database')
+
+    def test_all_fields_created(self):
+        "Test all fields created for basic form, in no particular order."
+        self.assertEquals(set(self.form.fields.keys()),
+                set(['created_on', 'topic', 'when', 'tags', 'duration']))
+        self.assertEquals(self.form.fields['created_on'].__class__,
+                forms.fields.DateTimeField)
+        self.assertEquals(self.form.fields['topic'].__class__,
+                forms.fields.CharField)
+        self.assertEquals(self.form.fields['when'].__class__,
+                forms.fields.DateTimeField)
+        self.assertEquals(self.form.fields['tags'].__class__,
+                mongokit_fields.JsonListField)
+        self.assertEquals(self.form.fields['duration'].__class__,
+                forms.fields.FloatField)
+
+    def test_required_set_correctly(self):
+        "Test required set correctly for basic form."
+        for field_name, field in self.form.fields.items():
+            if field_name in DetailedTalk.required_fields:
+                self.assertTrue(field.required, "%s should be required" % 
+                        field_name)
+            else:
+                self.assertEquals(field.required, False, "%s should not be required" %
+                        field_name)
+
+    def test_initial_values_set_correctly(self):
+        "Test the default value for created_on was set for basic form."
+        self.assertEquals(self.form.fields['created_on'].initial.ctime(), 
+                self.now.ctime())
+
+    def test_submit_with_good_values(self):
+        "Test saving a basic form with good values."
+        posted_form = BasicTalkForm({
+            'topic': 'science!',
+            'when': '3/10/2010',
+            'tags': '["science", "brains", "sf"]', # JSON
+            'duration': '45',
+        }, collection=self.database.test_collection)
+
+        self.assertTrue(posted_form.is_valid())
+        obj = posted_form.save()
+        self.assertEquals(obj['topic'], 'science!')
+        self.assertEquals(obj['when'], datetime.datetime(2010, 3, 10, 0, 0))
+        self.assertEquals(obj['tags'], ['science', 'brains', 'sf'])
+        self.assertEquals(obj['duration'], 45)
+
+    def test_submit_form_with_invalid_json(self):
+        "Test saving a basic form with bad JSON."
+        posted_form = BasicTalkForm({
+            'topic': 'science!',
+            'when': '3/10/2010',
+            'tags': '["science", "brains", "sf"', # INVALID JSON
+            'duration': '45',
+        }, collection=self.database.test_collection)
+
+        self.assertEquals(posted_form.is_valid(), False)
+        self.assertEquals(posted_form.errors['tags'], 
+                [u'Expecting object: line 1 column 25 (char 25)'])
+
+    def test_submit_empty_form(self):
+        "Test submitting an empty basic form shows proper errors."
+        posted_form = BasicTalkForm({
+            'topic': '',
+            'when': '',
+            'tags': '',
+            'duration': '',
+        }, collection=self.database.test_collection)
+
+        self.assertEquals(posted_form.is_valid(), False)
+        # In order of form specification.
+        self.assertEquals(posted_form.errors.keys(),
+                ['topic', 'duration', 'when'])
+        self.assertEquals(posted_form.errors.values(), [
+                [u'This field is required.'], 
+                [u'This field is required.'], 
+                [u'This field is required.']])
+
+class DetailedTalkForm(DocumentForm):
+    """
+    A form that customizes a field and some custom validation tags.
+    """
+    tags = forms.CharField(max_length=250, required=True)
+
+    def clean_tags(self):
+        value = self.cleaned_data['tags']
+        return [tag.strip() for tag in value.split(',')]
+
+    def clean_when(self):
+        w = self.cleaned_data['when']
+        when = datetime.datetime(w.year, w.month, w.day, 0,0,0)
+        return when
+
+    class Meta:
+        document = DetailedTalk
+        fields = ['topic', 'when', 'tags', 'duration']
+
+class CustomizedDocumentFormTest(unittest.TestCase):
+    "Test form customization"
+    def setUp(self):
+        from shortcut import connection
+        self.connection = connection
+        self.database = self.connection['django_mongokit_test_database']
+        self.form = DetailedTalkForm(collection=self.database.test_collection)
+
+    def tearDown(self):
+        self.connection.drop_database('django_mongokit_test_database')
+
+    def test_all_fields_created(self):
+        "Test that fields are created in order specified in form."
+        self.assertEquals(self.form.fields.keys(),
+                ['topic', 'when', 'tags', 'duration'])
+        self.assertEquals([fld.__class__ for fld in self.form.fields.values()],
+                [forms.fields.CharField, forms.fields.DateTimeField,
+                forms.fields.CharField, forms.fields.FloatField])
+
+    def test_required_set_correctly(self):
+        "Test that required values set correctly, even when overridden."
+        self.assertEquals(self.form.fields['topic'].required, True)
+        self.assertEquals(self.form.fields['when'].required, True)
+        self.assertEquals(self.form.fields['tags'].required, True)
+        self.assertEquals(self.form.fields['duration'].required, True)
+
+    def test_submit_form_with_correct_values(self):
+        "Test custom form submit."
+        posted_form = DetailedTalkForm({
+            'topic': 'science!',
+            'when': '3/10/2010',
+            'tags': 'science, brains, sf', # Comma Separated List
+            'duration': '45',
+        }, collection=self.database.test_collection)
+
+        self.assertTrue(posted_form.is_valid())
+        obj = posted_form.save()
+        self.assertEquals(obj['topic'], 'science!')
+        self.assertEquals(obj['when'], datetime.datetime(2010, 3, 10, 0, 0))
+        self.assertEquals(obj['tags'], ['science', 'brains', 'sf'])
+        self.assertEquals(obj['duration'], 45)
+
 if __name__ == '__main__':
     unittest.main()
