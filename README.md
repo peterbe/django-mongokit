@@ -121,5 +121,45 @@ difference from using Django 1.2 is to that you need to specify a
 setting called `MONGO_DATABASE_NAME` like this:
 
         MONGO_DATABASE_NAME = "example"
-	
+
+Document Forms
+--------------
+
+A version of Django's ModelForm has been supplied for Mongokit Documents, called DocumentForm.
+
+Using it is as simple as:
+
+    from django_mongokit.forms import DocumentForm
+    from models import Talk
+
+    class TalkForm(DocumentForm):
+        
+        class Meta:
+            document = Talk
+
+This automatically pulls the fields from mongokit's `structure` attribute, along with associated `required_fields` and `default_values`, and builds associated form fields for this document.
+
+You can customize the `DocumentForm` just like you'd customize a `ModelForm`:
+
+    class TalkForm(DocumentForm):
+      
+        def clean_when(self):
+            """
+            Take a date object from the DateField and create a
+            datetime object.
+            """
+            w = self.cleaned_data['when']
+            when = datetime.datetime(w.year, w.month, w.day, 0,0,0)
+            return when
+        
+        class Meta:
+            document = Talk
+            fields = ['topic', 'tags']
+            # You could also explicitly exclude fields
+            # exclude = ['created_on']
+
+Right now, DocumentForms support the following mongokit datatypes: `int`, `bool`, `float`, `unicode`, `datetime.datetime`, `datetime.date`, `datetime.time`, `list` and `dict` (`list` and `dict` show up as character fields editable in JSON format). DocumentForms do not support nested documents or nested dictionary keys at the moment.
+
+DocumentForms do not at the moment support mongokit validations.
+
 	
