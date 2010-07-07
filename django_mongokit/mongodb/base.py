@@ -142,6 +142,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     
     def __init__(self, settings_dict, alias=None, # alias was added in Django 1.2
                  *args, **kwargs):
+
         self.features = BaseDatabaseFeatures()
         self.ops = DatabaseOperations()
         self.client = DatabaseClient(self)
@@ -156,8 +157,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         settings_dict['SUPPORTS_TRANSACTIONS'] = False
         self.settings_dict = settings_dict
         self.alias = alias and alias or settings_dict['DATABASE_NAME']
-        
-        self.connection = ConnectionWrapper()
+        if settings_dict['HOST']:
+            kwargs['host'] = settings_dict['HOST']
+        if settings_dict['PORT']:
+            kwargs['port'] = int(settings_dict['PORT'])
+        self.connection = ConnectionWrapper(**kwargs)
  
 # Experimenting with commenting this out
 #    def _cursor(self):
@@ -166,7 +170,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def close(self):
         pass
-
+    
 class ConnectionWrapper(Connection):
     # Need to pretend we care about autocommit
     # BaseDatabaseCreation (in django/db/backends/creation.py) needs to
