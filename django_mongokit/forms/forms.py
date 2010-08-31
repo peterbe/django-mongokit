@@ -74,24 +74,29 @@ def document_to_dict(instance, fields=None, exclude=None):
     
     return data
 
-default_form_field_types = {
-    bool: forms.BooleanField,
-    int: forms.IntegerField,
-    float: forms.FloatField,
-    str: forms.CharField,
-    unicode: forms.CharField,
-    datetime.datetime: forms.DateTimeField,
-    datetime.date: forms.DateField,
-    datetime.time: forms.TimeField,
-    list: JsonListField,
-    dict: JsonField,
-}
+def get_default_form_field_types(document, field_name, field_type):
+    if field_name in document.custom_fields:
+        return document.custom_fields[field_name]
+    else:
+        default_form_field_types = {
+            bool: forms.BooleanField,
+            int: forms.IntegerField,
+            float: forms.FloatField,
+            str: forms.CharField,
+            unicode: forms.CharField,
+            datetime.datetime: forms.DateTimeField,
+            datetime.date: forms.DateField,
+            datetime.time: forms.TimeField,
+            list: JsonListField,
+            dict: JsonField,
+        }
+        return default_form_field_types[field_type]
 
 def formfield_for_document_field(document, field_name, 
         form_class=forms.CharField, **kwargs):
-    
+
     field_type = get_field_type_from_document(document, field_name)
-    FormField = default_form_field_types[field_type]
+    FormField = get_default_form_field_types(document,field_name,field_type)
     
     defaults = {
         'required': field_name in document.required_fields,
@@ -106,7 +111,10 @@ def formfield_for_document_field(document, field_name,
         if callable(default_value):
             default_value = default_value()
         defaults['initial'] = default_value
-    
+    if field_name in document.label_values:
+        label_value = document.label_values[field_name]
+        defaults['label'] = label_value
+
     defaults.update(kwargs)
     formfield = FormField(**defaults)
     return formfield
@@ -130,7 +138,7 @@ def fields_for_document(document, fields=None, exclude=None,
             continue
         if exclude and field_name in exclude:
             continue
-        
+
         form_field = None
         if formfield_callback:
             form_field = formfield_callback(document, field_name)
