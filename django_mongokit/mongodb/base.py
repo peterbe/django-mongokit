@@ -167,10 +167,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.settings_dict = settings_dict
         self.alias = alias and alias or settings_dict['DATABASE_NAME']
 
-# Experimenting with commenting this out
-#    def _cursor(self):
-#        return MongoCursor()
-
+        # transaction related attributes
+        self.transaction_state = None
 
     def close(self):
         pass

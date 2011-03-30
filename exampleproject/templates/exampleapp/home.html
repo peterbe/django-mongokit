@@ -1,13 +1,12 @@
-{% load django11 %} {# ignore this if you're using Django 1.2 #}
 <html>
 <body>
 <h1>Example app</h1>
 
 {% for talk in talks %}
   {% if forloop.first %}
-    <h2>{{ talks.count }} talks</h2>
+    <h2>{{ talks_count }} talks</h2>
   {% endif %}
-  
+
   <div>
     <p><strong>{{ talk.topic }}</strong>
     &ndash; {{ talk.when|date:"j F Y" }}<br/>
@@ -23,9 +22,7 @@
 
 <hr/>
 <form action="." method="post">
-
-{# so template work with Django 1.1 and 1.2 #}
-{% if csrf_token %}{% csrf_token %}{% endif %}
+{% csrf_token %}
 
 {{ form.as_p }}
 <input type="submit" value="+ Add talk"/>

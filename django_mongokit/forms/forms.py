@@ -13,40 +13,40 @@ def save_instance(form, instance, fields=None, fail_message='saved',
     if form.errors:
         raise ValueError("The %s could not be %s because the data didn't"
                 " validate." % ('object', fail_message))
-    
+
     cleaned_data = form.cleaned_data
-    
+
     for field_name, field_type in instance.structure.items():
         if fields and field_name not in fields:
             continue
         if exclude and field_name in exclude:
             continue
-        
+
         instance[field_name] = cleaned_data[field_name]
-        
+
     if commit:
         instance.save(validate=True)
-    
+
     return instance
 
 def get_field_type_from_document(instance, field_name):
-    
+
     field_type = instance.structure[field_name]
     if isinstance(field_type, list):
         field_type = list
     if isinstance(field_type, dict):
         field_type = dict
-    
+
     return field_type
 
 def value_from_document(instance, field_name):
-    
+
     field_type = get_field_type_from_document(instance, field_name)
-    
+
     # Refactor this into a class for each data type.
     if field_type in [list, dict]:
         return simplejson.dumps(instance[field_name])
-    
+
     return instance[field_name]
 
 def document_to_dict(instance, fields=None, exclude=None):
@@ -63,7 +63,7 @@ def document_to_dict(instance, fields=None, exclude=None):
     """
     # avoid a circular import
     structure = instance.structure
-    
+
     data = {}
     for field_name in structure.keys():
         if fields and not field_name in fields:
@@ -71,14 +71,14 @@ def document_to_dict(instance, fields=None, exclude=None):
         if exclude and field_name in exclude:
             continue
         data[field_name] = value_from_document(instance, field_name)
-    
+
     return data
 
 def get_default_form_field_types(document, field_name, field_type):
-    if field_name in document.custom_fields:
-        return document.custom_fields[field_name]
-    else:
-        default_form_field_types = {
+    #if field_name in document.custom_fields:
+    #    return document.custom_fields[field_name]
+    #else:
+    default_form_field_types = {
             bool: forms.BooleanField,
             int: forms.IntegerField,
             float: forms.FloatField,
@@ -89,15 +89,15 @@ def get_default_form_field_types(document, field_name, field_type):
             datetime.time: forms.TimeField,
             list: JsonListField,
             dict: JsonField,
-        }
-        return default_form_field_types[field_type]
+    }
+    return default_form_field_types[field_type]
 
-def formfield_for_document_field(document, field_name, 
+def formfield_for_document_field(document, field_name,
         form_class=forms.CharField, **kwargs):
 
     field_type = get_field_type_from_document(document, field_name)
     FormField = get_default_form_field_types(document,field_name,field_type)
-    
+
     defaults = {
         'required': field_name in document.required_fields,
     }
@@ -105,15 +105,15 @@ def formfield_for_document_field(document, field_name,
         defaults['initial'] = '[]'
     if field_type == dict:
         defaults['initial'] = '{}'
-    
+
     if field_name in document.default_values:
         default_value = document.default_values[field_name]
         if callable(default_value):
             default_value = default_value()
         defaults['initial'] = default_value
-    if field_name in document.label_values:
-        label_value = document.label_values[field_name]
-        defaults['label'] = label_value
+    #if field_name in document.label_values:
+    #    label_value = document.label_values[field_name]
+    #    defaults['label'] = label_value
 
     defaults.update(kwargs)
     formfield = FormField(**defaults)
@@ -146,11 +146,11 @@ def fields_for_document(document, fields=None, exclude=None,
             form_field = formfield_for_document_field(document, field_name)
         if form_field:
             field_list.append((field_name, form_field))
-    
+
     field_dict = SortedDict(field_list)
     if fields:
-        field_dict = SortedDict([(f, field_dict.get(f)) 
-                for f in fields 
+        field_dict = SortedDict([(f, field_dict.get(f))
+                for f in fields
                 if (not exclude) or (exclude and f not in exclude)])
     return field_dict
 
@@ -161,17 +161,17 @@ class DocumentFormOptions(object):
             self.document = getattr(options, 'document')
         except AttributeError:
             raise AttributeError("DocumentForm must specify a document class.")
-        
+
         try:
             self.document.collection
         except AttributeError:
             pass
         else:
             raise TypeError("Document must not be bound to a collection.")
-        
+
         self.fields = getattr(options, 'fields', None)
         self.exclude = getattr(options, 'exclude', None)
-        
+
 class DocumentFormMetaclass(type):
     def __new__(cls, name, bases, attrs):
         formfield_callback = attrs.pop('formfield_callback', None)
@@ -220,14 +220,14 @@ class BaseDocumentForm(BaseForm):
                 self.instance.collection
             except AttributeError:
                 raise AssertionError("Instance must be bound to a collection.")
-                
+
             object_data = document_to_dict(instance, opts.fields, opts.exclude)
         # if initial was provided, it should override the values from instance
         if initial is not None:
             object_data.update(initial)
         super(BaseDocumentForm, self).__init__(data, files, auto_id, prefix, object_data,
                                             error_class, label_suffix, empty_permitted)
-    
+
     def save(self, commit=True):
         if self.instance.get('_id', None) is None:
             fail_message = 'created'
@@ -235,14 +235,14 @@ class BaseDocumentForm(BaseForm):
             fail_message = 'changed'
         return save_instance(self, self.instance, self._meta.fields,
                              fail_message, commit, exclude=self._meta.exclude)
-    
+
     save.alters_data = True
-    
+
 class DocumentForm(BaseDocumentForm):
     __metaclass__ = DocumentFormMetaclass
 
 
-def documentform_factory(document, form=DocumentForm, 
+def documentform_factory(document, form=DocumentForm,
         fields=None, exclude=None,
         formfield_callback=None):
     # Create the inner Meta class. FIXME: ideally, we should be able to
@@ -250,14 +250,14 @@ def documentform_factory(document, form=DocumentForm,
     # inner class.
 
     # Build up a list of attributes that the Meta object will have.
-    
+
     try:
         document.collection
     except AttributeError:
         pass
     else:
         raise TypeError("Document must not be bound.")
-    
+
     attrs = { 'document': document }
     if fields is not None:
         attrs['fields'] = fields

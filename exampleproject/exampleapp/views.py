@@ -17,6 +17,7 @@ def homepage(request):
     collection = get_database()[Talk.collection_name]
     talks = collection.Talk.find()
     talks.sort('when', -1)
+    talks_count = talks.count()
 
     if request.method == "POST":
         form = TalkForm(request.POST, collection=collection)
@@ -26,7 +27,7 @@ def homepage(request):
     else:
         form = TalkForm(collection=collection)
 
-    return render_to_response("exampleapp/home.html", locals(), 
+    return render_to_response("exampleapp/home.html", locals(),
                               context_instance=RequestContext(request))
 
 
