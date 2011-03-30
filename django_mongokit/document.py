@@ -1,6 +1,11 @@
 import sys
 import re
-from mongokit.document import DocumentProperties, CallableMixin
+from mongokit.document import DocumentProperties
+try:
+    from mongokit.connection import CallableMixin
+except ImportError:
+    # mongokit < 0.6
+    from mongokit.document import CallableMixin
 from mongokit import Document
 from django.db.models import signals
 model_names = []
@@ -12,8 +17,8 @@ class _PK(object):
 
 class _Meta(object):
     def __init__(self, model_name, verbose_name, verbose_name_plural,
-                 module_name=None, 
-                 app_label=None, 
+                 module_name=None,
+                 app_label=None,
                  ):
         self.model_name = model_name
         self.verbose_name = verbose_name and verbose_name or \
@@ -22,7 +27,7 @@ class _Meta(object):
         self.module_name = module_name
         self.app_label = app_label
         self.pk = _PK() # needed for haystack
-                     
+
         #all_verbose_names.append(verbose_name)
         model_names.append((model_name, self.verbose_name))
 
@@ -80,8 +85,8 @@ class DjangoDocument(Document):
         raise ValueError("You can't set the ObjectId")
     pk = property(_get_pk_val, _set_pk_val)
     ##
-    
-    
+
+
     def delete(self):
         signals.pre_delete.send(sender=self.__class__, instance=self)
         super(DjangoDocument, self).delete()
@@ -89,11 +94,10 @@ class DjangoDocument(Document):
 
     def save(self, *args, **kwargs):
         signals.pre_save.send(sender=self.__class__, instance=self)
-    
+
         _id_before = '_id' in self and self['_id'] or None
         super(DjangoDocument, self).save(*args, **kwargs)
         _id_after = '_id' in self and self['_id'] or None
 
         signals.post_save.send(sender=self.__class__, instance=self,
                                created=bool(not _id_before and _id_after))
-
