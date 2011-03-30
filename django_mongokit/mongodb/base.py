@@ -142,8 +142,18 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     
     def __init__(self, settings_dict, alias=None, # alias was added in Django 1.2
                  *args, **kwargs):
+        if settings_dict['HOST']:
+            kwargs['host'] = settings_dict['HOST']
+        if settings_dict['PORT']:
+            kwargs['port'] = int(settings_dict['PORT'])
+           self.connection = ConnectionWrapper(**kwargs)
 
-        self.features = BaseDatabaseFeatures()
+        try:
+           self.features = BaseDatabaseFeatures(self.connection)
+        except:
+           # Django < 1.3
+           self.features = BaseDatabaseFeatures()
+
         self.ops = DatabaseOperations()
         self.client = DatabaseClient(self)
         self.creation = DatabaseCreation(self)
@@ -157,11 +167,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         settings_dict['SUPPORTS_TRANSACTIONS'] = False
         self.settings_dict = settings_dict
         self.alias = alias and alias or settings_dict['DATABASE_NAME']
-        if settings_dict['HOST']:
-            kwargs['host'] = settings_dict['HOST']
-        if settings_dict['PORT']:
-            kwargs['port'] = int(settings_dict['PORT'])
-        self.connection = ConnectionWrapper(**kwargs)
  
 # Experimenting with commenting this out
 #    def _cursor(self):
