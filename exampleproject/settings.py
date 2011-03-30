@@ -18,12 +18,12 @@ DATABASES = {
 #        'NAME': 'exampleapp',    # Or path to database file if using sqlite3.
 #    },
     'default': {
-        'ENGINE': 'sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'example-sqlite3.db',    # Or path to database file if using sqlite3.
-    },             
+    },
     'mongodb': {
-        'ENGINE': 'django_mongokit.mongodb', 
-        'NAME': 'example', 
+        'ENGINE': 'django_mongokit.mongodb',
+        'NAME': 'example',
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -99,4 +99,3 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
 )
-
