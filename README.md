@@ -12,7 +12,7 @@ The purpose of this module is to make it easy to use
 define your models for Django if you prefer to use MongoDB instead of
 a relational database. This kit takes care of the boilerplate and
 makes your MongoKit documents work better with Django as it defines a
-`_meta` class attribute when registering. 
+`_meta` class attribute when registering.
 
 Installation
 ------------
@@ -27,7 +27,7 @@ into your `settings.DATABASES` directive. Here's an example:
 
         DATABASES = {
             'default': {
-                'ENGINE': 'sqlite3', 
+                'ENGINE': 'django.db.backends.sqlite3',
                 'NAME': 'example-sqlite3.db',
             },
             'mongodb': {
@@ -42,15 +42,15 @@ What you can change is the `NAME` part under `DATABASES['mongodb']`.
 In Django, you might be used to doing something like this:
 
         from django.db import models
-	
+
         class Talk(models.Model):
 	    topic = models.CharField(max_length=250)
 	    date = models.DateTimeField()
-	    
+
 Now, with `django_mongokit` you can do this:
 
         from django_mongokit.document import DjangoDocument
-	
+
         class Talk(DjangoDocument):
 	    structure = {
 	       'topic': unicode,
@@ -72,7 +72,7 @@ example:
 	>>> talk = collection.Talk.find_one()
 	>>> talk
 	'4b87c6b19d40b3375a000001'
-	
+
 There's also the `_meta` attribute which Django people will be
 familiar with:
 
@@ -91,7 +91,7 @@ like you do it with the Django ORM:
 	    ...
 	    class Meta:
 	        verbose_name_plural = u"Talkings"
-		
+
 A limited set of signals are fired when working with `django_mongokit`
 documents. These are:
 
@@ -106,7 +106,7 @@ Examples
 
 `django-mongokit` comes with an example project and an example app
 that does some basic things. It might be a good source of inspiration
-for how to use `django-mongokit` to look at this example app. 
+for how to use `django-mongokit` to look at this example app.
 
 
 Django 1.1 (pre multi-db support)
@@ -133,7 +133,7 @@ Using it is as simple as:
     from models import Talk
 
     class TalkForm(DocumentForm):
-        
+
         class Meta:
             document = Talk
 
@@ -142,7 +142,7 @@ This automatically pulls the fields from mongokit's `structure` attribute, along
 You can customize the `DocumentForm` just like you'd customize a `ModelForm`:
 
     class TalkForm(DocumentForm):
-      
+
         def clean_when(self):
             """
             Take a date object from the DateField and create a
@@ -151,7 +151,7 @@ You can customize the `DocumentForm` just like you'd customize a `ModelForm`:
             w = self.cleaned_data['when']
             when = datetime.datetime(w.year, w.month, w.day, 0,0,0)
             return when
-        
+
         class Meta:
             document = Talk
             fields = ['topic', 'tags']
@@ -161,5 +161,3 @@ You can customize the `DocumentForm` just like you'd customize a `ModelForm`:
 Right now, DocumentForms support the following mongokit datatypes: `int`, `bool`, `float`, `unicode`, `datetime.datetime`, `datetime.date`, `datetime.time`, `list` and `dict` (`list` and `dict` show up as character fields editable in JSON format). DocumentForms do not support nested documents or nested dictionary keys at the moment.
 
 DocumentForms do not at the moment support mongokit validations.
-
-	
