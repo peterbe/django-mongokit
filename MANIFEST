@@ -10,3 +10,6 @@ django_mongokit/test_settings.py
 django_mongokit/tests.py
 django_mongokit/mongodb/__init__.py
 django_mongokit/mongodb/base.py
+django_mongokit/forms/__init__.py
+django_mongokit/forms/fields.py
+django_mongokit/forms/forms.py
