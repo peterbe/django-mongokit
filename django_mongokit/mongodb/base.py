@@ -145,6 +145,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             kwargs['host'] = settings_dict['HOST']
         if settings_dict['PORT']:
             kwargs['port'] = int(settings_dict['PORT'])
+        if 'OPTIONS' in settings_dict:
+            kwargs.update(settings_dict['OPTIONS'])
+        print kwargs
         self.connection = ConnectionWrapper(**kwargs)
 
         try:
