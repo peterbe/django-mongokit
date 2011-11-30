@@ -1,7 +1,8 @@
 django-mongokit
 ===============
 
-(c) Peter Bengtsson, peter@fry-it.com, 2010
+By: Peter Bengtsson, mail@peterbe.com, 2010-2011
+
 License: New BSD License
 
 Bridging Django to MongoDB with the MongoKit ODM
@@ -17,7 +18,7 @@ makes your MongoKit documents work better with Django as it defines a
 Installation
 ------------
 
-`pip/easy_install django-mongokit`
+`pip install django-mongokit`
 
 Usage/Configuration
 -------------------
@@ -25,37 +26,37 @@ Usage/Configuration
 First of all you need to define a name of the database and but that
 into your `settings.DATABASES` directive. Here's an example:
 
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': 'example-sqlite3.db',
-            },
-            'mongodb': {
-                'ENGINE': 'django_mongokit.mongodb',
-                'NAME': 'example',
-            },
-        }
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'example-sqlite3.db',
+        },
+        'mongodb': {
+            'ENGINE': 'django_mongokit.mongodb',
+            'NAME': 'example',
+        },
+    }
 
 Note that `default` and `mongodb` are mandatory keys in this settings.
 What you can change is the `NAME` part under `DATABASES['mongodb']`.
 
 In Django, you might be used to doing something like this:
 
-        from django.db import models
+    from django.db import models
 
-        class Talk(models.Model):
-	    topic = models.CharField(max_length=250)
-	    date = models.DateTimeField()
+    class Talk(models.Model):
+        topic = models.CharField(max_length=250)
+        date = models.DateTimeField()
 
 Now, with `django_mongokit` you can do this:
 
-        from django_mongokit.document import DjangoDocument
+    from django_mongokit.document import DjangoDocument
 
-        class Talk(DjangoDocument):
-	    structure = {
-	       'topic': unicode,
-	       'date': datetime.datetime
-	    }
+    class Talk(DjangoDocument):
+        structure = {
+	   'topic': unicode,
+	   'date': datetime.datetime
+	}
 
 This base class gives you some benefits out-of-the-box which will
 hopefully make working with MongoKit documents easier such as `pk`.
@@ -63,42 +64,42 @@ This will return the `ObjectID` of an instance as a byte string which
 can be very useful for mapping URLs and finding documents by ID. For
 example:
 
-	>>> from mongokit import Connection
-	>>> conn = Connection()
-	>>> from exampleapp.models import Talk
-	>>> conn.register([Talk])
-	>>> database = conn['example']
-	>>> collection = database['talks']
-	>>> talk = collection.Talk.find_one()
-	>>> talk
-	'4b87c6b19d40b3375a000001'
+    >>> from mongokit import Connection
+    >>> conn = Connection()
+    >>> from exampleapp.models import Talk
+    >>> conn.register([Talk])
+    >>> database = conn['example']
+    >>> collection = database['talks']
+    >>> talk = collection.Talk.find_one()
+    >>> talk
+    '4b87c6b19d40b3375a000001'
 
 There's also the `_meta` attribute which Django people will be
 familiar with:
 
-        >>> talk._meta
-	<Meta Talk 'Talk', 'Talks'>
-	>>> talk._meta.verbose_name
-	'Talk'
-	>>> talk._meta.verbose_name_plural
-	'Talks'
+    >>> talk._meta
+    <Meta Talk 'Talk', 'Talks'>
+    >>> talk._meta.verbose_name
+    'Talk'
+    >>> talk._meta.verbose_name_plural
+    'Talks'
 
 If you want to override any of the `_meta` attributes you do it just
 like you do it with the Django ORM:
 
 
-        class Talk(models.Model):
-	    ...
-	    class Meta:
-	        verbose_name_plural = u"Talkings"
+    class Talk(models.Model):
+        ...
+        class Meta:
+            verbose_name_plural = u"Talkings"
 
 A limited set of signals are fired when working with `django_mongokit`
 documents. These are:
 
-* pre_delete
-* post_delete
-* pre_save
-* post_save
+* ``pre_delete``
+* ``post_delete``
+* ``pre_save``
+* ``post_save``
 
 
 Examples
@@ -120,7 +121,7 @@ but you then have a fast logging app that writes to MongoDB. The way
 difference from using Django 1.2 is to that you need to specify a
 setting called `MONGO_DATABASE_NAME` like this:
 
-        MONGO_DATABASE_NAME = "example"
+    MONGO_DATABASE_NAME = "example"
 
 Document Forms
 --------------
@@ -161,3 +162,18 @@ You can customize the `DocumentForm` just like you'd customize a `ModelForm`:
 Right now, DocumentForms support the following mongokit datatypes: `int`, `bool`, `float`, `unicode`, `datetime.datetime`, `datetime.date`, `datetime.time`, `list` and `dict` (`list` and `dict` show up as character fields editable in JSON format). DocumentForms do not support nested documents or nested dictionary keys at the moment.
 
 DocumentForms do not at the moment support mongokit validations.
+
+
+Troubleshooting
+---------------
+
+If you get this error:
+
+    django.core.exceptions.ImproperlyConfigured:
+      'django_mongokit.mongodb' isn't an available database backend. 
+    Try using django.db.backends.XXX, where XXX is one of:
+      'dummy', 'mysql', 'oracle', 'postgresql', 'postgresql_psycopg2',
+      'sqlite3'
+    Error was: No module named mongokit
+    
+Then it's simply because you don't have ``mongokit`` itself installed.   
