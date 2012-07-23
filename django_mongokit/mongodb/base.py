@@ -155,7 +155,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             # Django < 1.3
             self.features = BaseDatabaseFeatures()
 
-        self.ops = DatabaseOperations()
+        try:
+            self.ops = DatabaseOperations(self.connection)
+        except TypeError:
+            # Django < 1.4
+            self.ops = DatabaseOperations()
+
         self.client = DatabaseClient(self)
         self.creation = DatabaseCreation(self)
         self.introspection = DatabaseIntrospection(self)
