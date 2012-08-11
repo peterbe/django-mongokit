@@ -1,19 +1,17 @@
-import datetime
 try:
     from bson import ObjectId
 except ImportError:  # old pymongo
     from pymongo.objectid import ObjectId
-from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.conf import settings
+from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from django_mongokit import get_database, connection
-
+from django_mongokit import get_database
 
 from models import Talk
 from forms import TalkForm
+
 
 def homepage(request):
 
@@ -30,8 +28,14 @@ def homepage(request):
     else:
         form = TalkForm(collection=collection)
 
-    return render_to_response("exampleapp/home.html", locals(),
-                              context_instance=RequestContext(request))
+    return render_to_response(
+        "exampleapp/home.html", {
+            'talks': talks,
+            'form': form,
+            'talks_count': talks_count,
+        },
+        context_instance=RequestContext(request)
+    )
 
 
 def delete_talk(request, _id):

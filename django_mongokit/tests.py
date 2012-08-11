@@ -2,19 +2,23 @@ import os
 import unittest
 from document import DjangoDocument
 
+
 class Talk(DjangoDocument):
     structure = {'topic': unicode}
+
 
 class CrazyOne(DjangoDocument):
     class Meta:
         verbose_name = u"Crazy One"
     structure = {'name': unicode}
 
+
 class CrazyTwo(DjangoDocument):
     class Meta:
         verbose_name = u"Crazy Two"
         verbose_name_plural = u"Crazies Two"
     structure = {'names': unicode}
+
 
 class LighteningTalk(Talk):
     structure = {'has_slides': bool}
@@ -41,7 +45,7 @@ class DocumentTest(unittest.TestCase):
         self.assertFalse(hasattr(klass._meta, 'abstract'))
         self.assertEqual(klass._meta.verbose_name, u"Talk")
         self.assertEqual(klass._meta.verbose_name_plural, u"Talks")
-        self.assertEqual(klass._meta.app_label, u"__main__") # test runner
+        self.assertEqual(klass._meta.app_label, u"__main__")  # test runner
         self.assertEqual(klass._meta.model_name, u"Talk")
 
         self.assertEqual(klass._meta.pk.attname, '_id')
@@ -76,7 +80,7 @@ class DocumentTest(unittest.TestCase):
         # create an instance an expect to get the ID as a string
         collection = self.database.talks
         talk = collection.Talk()
-        self.assertRaises(KeyError, lambda t:t.pk, talk)
+        self.assertRaises(KeyError, lambda t: t.pk, talk)
         talk['topic'] = u"Something"
         talk.save()
         self.assertTrue(talk['_id'])
@@ -85,12 +89,10 @@ class DocumentTest(unittest.TestCase):
         self.assertEqual(talk.pk, str(talk['_id']))
 
         def setter(inst, forced_id):
-            inst.pk = forced_id # will fail
+            inst.pk = forced_id  # will fail
         self.assertRaises(ValueError, setter, talk, 'bla')
 
     def test_signals(self):
-        #self.connection.register([LighteningTalk])
-
         _fired = []
 
         def trigger_pre_delete(sender, instance, **__):
@@ -108,7 +110,6 @@ class DocumentTest(unittest.TestCase):
                 if isinstance(instance, LighteningTalk):
                     if not getattr(instance, '_id', None):
                         _fired.append('pre_save')
-
 
         def trigger_post_save(sender, instance, raw=None, created=False, **__):
             assert created in (True, False), "created is supposed to be a bool"
@@ -161,9 +162,11 @@ class ShortcutTestCase(unittest.TestCase):
     def test_get_version(self):
         from shortcut import get_version
         version = get_version()
-        self.assertEqual(version,
-                         open(os.path.join(os.path.dirname(__file__),
-                         'version.txt')).read())
+        self.assertEqual(
+            version,
+            open(os.path.join(os.path.dirname(__file__),
+                'version.txt')).read()
+        )
 
 
 class MongoDBBaseTestCase(unittest.TestCase):
@@ -173,8 +176,7 @@ class MongoDBBaseTestCase(unittest.TestCase):
             from django.db import connections
         except ImportError:
             # Django <1.2
-            return # :(
-
+            return  # :(
         self.assertTrue('mongodb' in connections)
         from django.db.utils import load_backend
         backend = load_backend('django_mongokit.mongodb')
@@ -185,9 +187,9 @@ class MongoDBBaseTestCase(unittest.TestCase):
             from django.db import connections
         except ImportError:
             # Django <1.2
-            return # :(
+            return  # :(
         connection = connections['mongodb']
-        self.assertTrue(hasattr(connection, 'connection')) # stupid name!
+        self.assertTrue(hasattr(connection, 'connection'))  # stupid name!
         # needed attribute
         self.assertTrue(hasattr(connection.connection, 'autocommit'))
 
@@ -197,7 +199,7 @@ class MongoDBBaseTestCase(unittest.TestCase):
             assert 'mongodb' in settings.DATABASES
         except AttributeError:
             # Django <1.2
-            return # :(
+            return  # :(
         old_database_name = settings.DATABASES['mongodb']['NAME']
         assert 'test_' not in old_database_name
         # pretend we're the Django 'test' command
@@ -237,7 +239,6 @@ class MongoDBBaseTestCase(unittest.TestCase):
             # Django <1.2
             return
         settings.DATABASES['mongodb']['TEST_NAME'] = "muststartwith__test_"
-        old_database_name = settings.DATABASES['mongodb']['NAME']
         from django.db import connections
         connection = connections['mongodb']
 
@@ -245,7 +246,6 @@ class MongoDBBaseTestCase(unittest.TestCase):
         #from mongodb.base import DatabaseError
         #self.assertRaises(DatabaseError, connection.creation.create_test_db)
         self.assertRaises(Exception, connection.creation.create_test_db)
-
 
     def test_create_test_database_by_specific_good_name(self):
         from django.conf import settings
@@ -277,7 +277,8 @@ class MongoDBBaseTestCase(unittest.TestCase):
         self.assertTrue(test_database_name in con.database_names())
 
         connection.creation.destroy_test_db(old_database_name)
-        self.assertTrue('test_mustard' not in settings.DATABASES['mongodb']['NAME'])
+        self.assertTrue('test_mustard' not in
+                        settings.DATABASES['mongodb']['NAME'])
         self.assertTrue(test_database_name not in con.database_names())
 
 #
@@ -288,10 +289,11 @@ from django_mongokit.forms import DocumentForm
 from django_mongokit.forms import fields as mongokit_fields
 from django import forms
 
+
 class DetailedTalk(DjangoDocument):
     """
-A detailed talk document for testing automated form creation.
-"""
+    A detailed talk document for testing automated form creation.
+    """
     structure = {
         'created_on': datetime.datetime,
         'topic': unicode,
@@ -306,6 +308,7 @@ A detailed talk document for testing automated form creation.
 
     required_fields = ['topic', 'when', 'duration']
 
+
 class BasicTalkForm(DocumentForm):
     """
     A basic form, without customized behavior.
@@ -313,8 +316,10 @@ class BasicTalkForm(DocumentForm):
     class Meta:
         document = DetailedTalk
 
+
 class BasicDocumentFormTest(unittest.TestCase):
     "Test the basic form construction without customization"
+
     def setUp(self):
         from shortcut import connection
         self.connection = connection
@@ -345,11 +350,16 @@ class BasicDocumentFormTest(unittest.TestCase):
         "Test required set correctly for basic form."
         for field_name, field in self.form.fields.items():
             if field_name in DetailedTalk.required_fields:
-                self.assertTrue(field.required, "%s should be required" %
-                        field_name)
+                self.assertTrue(
+                    field.required,
+                    "%s should be required" % field_name
+                )
             else:
-                self.assertEquals(field.required, False, "%s should not be required" %
-                        field_name)
+                self.assertEquals(
+                    field.required,
+                    False,
+                    "%s should not be required" % field_name
+                )
 
     def test_initial_values_set_correctly(self):
         "Test the default value for created_on was set for basic form."
@@ -361,7 +371,7 @@ class BasicDocumentFormTest(unittest.TestCase):
         posted_form = BasicTalkForm({
             'topic': 'science!',
             'when': '3/10/2010',
-            'tags': '["science", "brains", "sf"]', # JSON
+            'tags': '["science", "brains", "sf"]',  # JSON
             'duration': '45',
         }, collection=self.database.test_collection)
 
@@ -377,7 +387,7 @@ class BasicDocumentFormTest(unittest.TestCase):
         posted_form = BasicTalkForm({
             'topic': 'science!',
             'when': '3/10/2010',
-            'tags': '["science", "brains", "sf"', # INVALID JSON
+            'tags': '["science", "brains", "sf"',  # INVALID JSON
             'duration': '45',
         }, collection=self.database.test_collection)
 
@@ -404,6 +414,7 @@ class BasicDocumentFormTest(unittest.TestCase):
                 [u'This field is required.'],
                 [u'This field is required.']])
 
+
 class DetailedTalkForm(DocumentForm):
     """
     A form that customizes a field and some custom validation tags.
@@ -416,12 +427,13 @@ class DetailedTalkForm(DocumentForm):
 
     def clean_when(self):
         w = self.cleaned_data['when']
-        when = datetime.datetime(w.year, w.month, w.day, 0,0,0)
+        when = datetime.datetime(w.year, w.month, w.day, 0, 0, 0)
         return when
 
     class Meta:
         document = DetailedTalk
         fields = ['topic', 'when', 'tags', 'duration']
+
 
 class CustomizedDocumentFormTest(unittest.TestCase):
     "Test form customization"
@@ -454,7 +466,7 @@ class CustomizedDocumentFormTest(unittest.TestCase):
         posted_form = DetailedTalkForm({
             'topic': 'science!',
             'when': '3/10/2010',
-            'tags': 'science, brains, sf', # Comma Separated List
+            'tags': 'science, brains, sf',  # Comma Separated List
             'duration': '45',
         }, collection=self.database.test_collection)
 

@@ -2,6 +2,7 @@ import datetime
 from django_mongokit import connection
 from django_mongokit.document import DjangoDocument
 
+
 # Create your models here.
 class Talk(DjangoDocument):
     collection_name = 'talks'
@@ -11,9 +12,9 @@ class Talk(DjangoDocument):
         'tags': list,
         'duration': float,
     }
-    
+
     required_fields = ['topic', 'when', 'duration']
-    
+
     use_dot_notation = True
-    
-connection.register([Talk])    
+
+connection.register([Talk])

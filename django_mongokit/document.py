@@ -12,8 +12,10 @@ model_names = []
 
 from shortcut import connection
 
+
 class _PK(object):
     attname = '_id'
+
 
 class _Meta(object):
     def __init__(self, model_name, verbose_name, verbose_name_plural,
@@ -21,14 +23,15 @@ class _Meta(object):
                  app_label=None,
                  ):
         self.model_name = model_name
-        self.verbose_name = verbose_name and verbose_name or \
-          re.sub('([a-z])([A-Z])', r'\1 \2', model_name)
-        self.verbose_name_plural = verbose_name_plural or self.verbose_name + 's'
+        self.verbose_name = (
+            verbose_name and verbose_name or
+            re.sub('([a-z])([A-Z])', r'\1 \2', model_name)
+        )
+        self.verbose_name_plural = (verbose_name_plural or
+                                    self.verbose_name + 's')
         self.module_name = module_name
         self.app_label = app_label
-        self.pk = _PK() # needed for haystack
-
-        #all_verbose_names.append(verbose_name)
+        self.pk = _PK()  # needed for haystack
         model_names.append((model_name, self.verbose_name))
 
     def __repr__(self):
@@ -39,12 +42,13 @@ class _Meta(object):
 
 class DjangoDocumentMetaClass(DocumentProperties):
     def __new__(cls, name, bases, attrs):
-        new_class = super(DjangoDocumentMetaClass, cls).__new__(cls, name, bases, attrs)
+        new_class = (super(DjangoDocumentMetaClass, cls)
+                     .__new__(cls, name, bases, attrs))
 
         if CallableMixin in bases:
-            # When you register models in the views for example it will register
-            # all the models again but then they'll be subclasses of mongokit's
-            # CallableMixin.
+            # When you register models in the views for example it will
+            # register all the models again but then they'll be subclasses of
+            # mongokit's CallableMixin.
             # When this is the case we don't want to bother registering any
             # meta stuff about them so exit here
             return new_class
@@ -56,7 +60,9 @@ class DjangoDocumentMetaClass(DocumentProperties):
             return new_class
 
         verbose_name = meta and getattr(meta, 'verbose_name', None) or None
-        verbose_name_plural = meta and getattr(meta, 'verbose_name_plural', None) or None
+        verbose_name_plural = (meta and
+                               getattr(meta, 'verbose_name_plural', None)
+                               or None)
         meta = _Meta(name, verbose_name, verbose_name_plural)
 
         model_module = sys.modules[new_class.__module__]
@@ -79,13 +85,12 @@ class DjangoDocument(Document):
     def _get_pk_val(self, meta=None):
         if not meta:
             meta = self._meta
-        #return str(getattr(self, meta.pk.attname))
         return str(self[meta.pk.attname])
+
     def _set_pk_val(self, value):
         raise ValueError("You can't set the ObjectId")
-    pk = property(_get_pk_val, _set_pk_val)
-    ##
 
+    pk = property(_get_pk_val, _set_pk_val)
 
     def delete(self):
         signals.pre_delete.send(sender=self.__class__, instance=self)

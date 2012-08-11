@@ -4,61 +4,61 @@ MongoKit (MongoDB) backend for Django.
 
 from mongokit import Connection
 
-from django.core.exceptions import ImproperlyConfigured
-from django.db.backends import *
+from django.db.backends import (
+    BaseDatabaseOperations,
+    BaseDatabaseClient,
+    BaseDatabaseIntrospection,
+    BaseDatabaseWrapper,
+    BaseDatabaseFeatures,
+    BaseDatabaseValidation
+)
 from django.db.backends.creation import BaseDatabaseCreation
 from django.conf import settings
+
+TEST_DATABASE_PREFIX = 'test_'
+
 
 class UnsupportedConnectionOperation(Exception):
     pass
 
+
 def complain(*args, **kwargs):
-    #print "ARGS", args
-    #print "KWARGS", kwargs
     raise UnsupportedConnectionOperation("ARGS=%s" % unicode(args))
+
 
 def ignore(*args, **kwargs):
     pass
 
+
 class DatabaseError(Exception):
     pass
+
 
 class IntegrityError(DatabaseError):
     pass
 
+
 class DatabaseOperations(BaseDatabaseOperations):
+
     def quote_name(self, name):
         return '<%s>' % name
+
     def sql_flush(self, *args, **kwargs):
         # deliberately do nothing as this doesn't apply to us
-        return [True] # pretend that we did something
+        return [True]  # pretend that we did something
+
 
 class DatabaseClient(BaseDatabaseClient):
     runshell = complain
 
+
 class DatabaseIntrospection(BaseDatabaseIntrospection):
-    #get_table_list = complain
     def get_table_list(self, cursor):
         return []
     get_table_description = complain
     get_relations = complain
     get_indexes = complain
 
-
-
-# Needed for Django <1.2
-#class MongoCursor(object):
-#    latest_result = None
-#    def execute(self, sql, params=None):
-#        print "SQL Command"
-#        print repr(sql)
-#        print
-#        self.latest_result = None
-#
-#    def fetchone(self):
-#        return [self.latest_result]
-
-TEST_DATABASE_PREFIX = 'test_'
 
 class DatabaseCreation(BaseDatabaseCreation):
     def create_test_db(self, verbosity=1, autoclobber=False):
@@ -68,13 +68,17 @@ class DatabaseCreation(BaseDatabaseCreation):
         if self.connection.settings_dict.get('TEST_NAME'):
             test_database_name = self.connection.settings_dict['TEST_NAME']
         elif 'NAME' in self.connection.settings_dict:
-            test_database_name = TEST_DATABASE_PREFIX + self.connection.settings_dict['NAME']
+            test_database_name = (TEST_DATABASE_PREFIX +
+                                  self.connection.settings_dict['NAME'])
         elif 'DATABASE_NAME' in self.connection.settings_dict:
-            if self.connection.settings_dict['DATABASE_NAME'].startswith(TEST_DATABASE_PREFIX):
+            if (self.connection.settings_dict['DATABASE_NAME']
+                .startswith(TEST_DATABASE_PREFIX)):
                 # already been set up
-                # must be because this is called from a setUp() instead of something formal.
+                # must be because this is called from a setUp() instead of
+                # something formal.
                 # suspect this Django 1.1
-                test_database_name = self.connection.settings_dict['DATABASE_NAME']
+                test_database_name = (self.connection
+                                      .settings_dict['DATABASE_NAME'])
             else:
                 test_database_name = TEST_DATABASE_PREFIX + \
                   self.connection.settings_dict['DATABASE_NAME']
@@ -91,13 +95,14 @@ class DatabaseCreation(BaseDatabaseCreation):
         except AttributeError:
             settings.MONGO_DATABASE_NAME = test_database_name
 
-        settings.DATABASE_SUPPORTS_TRANSACTIONS = False # MongoDB :)
+        settings.DATABASE_SUPPORTS_TRANSACTIONS = False  # MongoDB :)
 
         # In this phase it will only drop the database if it already existed
         # which could potentially happen if the test database was created but
         # was never dropped at the end of the tests
         self._drop_database(test_database_name)
-        # if it didn't exist it will automatically be created by the mongokit conncetion
+        # if it didn't exist it will automatically be created by the
+        # mongokit conncetion
 
     def destroy_test_db(self, old_database_name, verbosity=1):
         """
@@ -108,7 +113,7 @@ class DatabaseCreation(BaseDatabaseCreation):
             print "Destroying test database '%s'..." % self.connection.alias
         if 'DATABASE_NAME' in self.connection.settings_dict:
             # Django <1.2
-            test_database_name = settings.MONGO_DATABASE_NAME #self.connection.settings_dict['DATABASE_NAME']
+            test_database_name = settings.MONGO_DATABASE_NAME
         else:
             test_database_name = self.connection.settings_dict['NAME']
         self._drop_database(test_database_name)
@@ -123,8 +128,10 @@ class DatabaseCreation(BaseDatabaseCreation):
         if not database_name.startswith(TEST_DATABASE_PREFIX):
             # paranoia
             raise DatabaseError(
-              "Suspicous! Can't delete database (%r) unless it's prefixed by %s" % \
-              (database_name, TEST_DATABASE_PREFIX))
+                "Suspicous! Can't delete database (%r) unless it's "
+                "prefixed by %s" %
+                (database_name, TEST_DATABASE_PREFIX)
+            )
         if database_name in self.connection.connection.database_names():
             # needs to be dropped
             self.connection.connection.drop_database(database_name)
@@ -137,9 +144,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     autocommit = None  # ignore
 
-    def __init__(self, settings_dict, alias=None,  # alias was added in Django 1.2
-                 *args, **kwargs):
-        super(DatabaseWrapper, self).__init__(settings_dict, alias=alias, *args, **kwargs)
+    def __init__(self, settings_dict, alias=None, *args, **kwargs):
+        super(DatabaseWrapper, self).__init__(
+            settings_dict,
+            alias=alias,
+            *args,
+            **kwargs
+        )
 
         if settings_dict['HOST']:
             kwargs['host'] = settings_dict['HOST']
@@ -180,14 +191,16 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def close(self):
         pass
 
+
 class ConnectionWrapper(Connection):
     # Need to pretend we care about autocommit
     # BaseDatabaseCreation (in django/db/backends/creation.py) needs to
     # set autocommit
-    autocommit = True # Needed attribute but its value is ignored
+    autocommit = True  # Needed attribute but its value is ignored
 
     def __init__(self, *args, **kwargs):
         super(ConnectionWrapper, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return 'ConnectionWrapper: ' + super(ConnectionWrapper, self).__repr__()
+        return ('ConnectionWrapper: ' +
+                super(ConnectionWrapper, self).__repr__())

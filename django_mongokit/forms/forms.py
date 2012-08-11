@@ -3,10 +3,11 @@ from django import forms
 from django.utils import simplejson
 
 from django.utils.datastructures import SortedDict
-from django.forms.util import ValidationError, ErrorList
-from django.forms.forms import BaseForm, get_declared_fields, NON_FIELD_ERRORS
+from django.forms.util import ErrorList
+from django.forms.forms import BaseForm, get_declared_fields
 
 from fields import JsonField, JsonListField
+
 
 def save_instance(form, instance, fields=None, fail_message='saved',
                   commit=True, exclude=None):
@@ -29,6 +30,7 @@ def save_instance(form, instance, fields=None, fail_message='saved',
 
     return instance
 
+
 def get_field_type_from_document(instance, field_name):
 
     field_type = instance.structure[field_name]
@@ -39,6 +41,7 @@ def get_field_type_from_document(instance, field_name):
 
     return field_type
 
+
 def value_from_document(instance, field_name):
 
     field_type = get_field_type_from_document(instance, field_name)
@@ -48,6 +51,7 @@ def value_from_document(instance, field_name):
         return simplejson.dumps(instance[field_name])
 
     return instance[field_name]
+
 
 def document_to_dict(instance, fields=None, exclude=None):
     """
@@ -74,10 +78,8 @@ def document_to_dict(instance, fields=None, exclude=None):
 
     return data
 
+
 def get_default_form_field_types(document, field_name, field_type):
-    #if field_name in document.custom_fields:
-    #    return document.custom_fields[field_name]
-    #else:
     default_form_field_types = {
             bool: forms.BooleanField,
             int: forms.IntegerField,
@@ -92,11 +94,13 @@ def get_default_form_field_types(document, field_name, field_type):
     }
     return default_form_field_types[field_type]
 
+
 def formfield_for_document_field(document, field_name,
-        form_class=forms.CharField, **kwargs):
+                                 form_class=forms.CharField,
+                                 **kwargs):
 
     field_type = get_field_type_from_document(document, field_name)
-    FormField = get_default_form_field_types(document,field_name,field_type)
+    FormField = get_default_form_field_types(document, field_name, field_type)
 
     defaults = {
         'required': field_name in document.required_fields,
@@ -111,13 +115,11 @@ def formfield_for_document_field(document, field_name,
         if callable(default_value):
             default_value = default_value()
         defaults['initial'] = default_value
-    #if field_name in document.label_values:
-    #    label_value = document.label_values[field_name]
-    #    defaults['label'] = label_value
 
     defaults.update(kwargs)
     formfield = FormField(**defaults)
     return formfield
+
 
 def fields_for_document(document, fields=None, exclude=None,
         formfield_callback=None):
@@ -154,6 +156,7 @@ def fields_for_document(document, fields=None, exclude=None,
                 if (not exclude) or (exclude and f not in exclude)])
     return field_dict
 
+
 class DocumentFormOptions(object):
     def __init__(self, options=None):
 
@@ -172,6 +175,7 @@ class DocumentFormOptions(object):
         self.fields = getattr(options, 'fields', None)
         self.exclude = getattr(options, 'exclude', None)
 
+
 class DocumentFormMetaclass(type):
     def __new__(cls, name, bases, attrs):
         formfield_callback = attrs.pop('formfield_callback', None)
@@ -186,7 +190,9 @@ class DocumentFormMetaclass(type):
         if not parents:
             return new_class
 
-        opts = new_class._meta = DocumentFormOptions(getattr(new_class, 'Meta', None))
+        opts = new_class._meta = DocumentFormOptions(
+            getattr(new_class, 'Meta', None)
+        )
         if opts.document:
             # If a model is defined, extract form fields from it.
             fields = fields_for_document(opts.document, opts.fields,
@@ -199,6 +205,7 @@ class DocumentFormMetaclass(type):
         new_class.declared_fields = declared_fields
         new_class.base_fields = fields
         return new_class
+
 
 class BaseDocumentForm(BaseForm):
     def __init__(self, data=None, files=None, auto_id='id_%s', prefix=None,
@@ -225,8 +232,10 @@ class BaseDocumentForm(BaseForm):
         # if initial was provided, it should override the values from instance
         if initial is not None:
             object_data.update(initial)
-        super(BaseDocumentForm, self).__init__(data, files, auto_id, prefix, object_data,
-                                            error_class, label_suffix, empty_permitted)
+        super(BaseDocumentForm, self).__init__(
+            data, files, auto_id, prefix, object_data,
+            error_class, label_suffix, empty_permitted
+        )
 
     def save(self, commit=True):
         if self.instance.get('_id', None) is None:
@@ -237,6 +246,7 @@ class BaseDocumentForm(BaseForm):
                              fail_message, commit, exclude=self._meta.exclude)
 
     save.alters_data = True
+
 
 class DocumentForm(BaseDocumentForm):
     __metaclass__ = DocumentFormMetaclass
@@ -258,7 +268,7 @@ def documentform_factory(document, form=DocumentForm,
     else:
         raise TypeError("Document must not be bound.")
 
-    attrs = { 'document': document }
+    attrs = {'document': document}
     if fields is not None:
         attrs['fields'] = fields
     if exclude is not None:
