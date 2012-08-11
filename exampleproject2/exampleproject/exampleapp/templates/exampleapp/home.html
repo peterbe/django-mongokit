@@ -1,6 +1,8 @@
+<!DOCTYPE html>
 <html>
 <body>
 <h1>Example app</h1>
+{% load url from future %}
 
 {% for talk in talks %}
   {% if forloop.first %}
@@ -9,10 +11,10 @@
 
   <div>
     <p><strong>{{ talk.topic }}</strong>
-    &ndash; {{ talk.when|date:"j F Y" }}<br/>
-    Duration: {{ talk.duration }}h<br/>
-    Tags: {{ talk.tags|join:", " }}<br/>
-    <a href="{% url delete_talk talk.pk %}">delete</a>
+    &ndash; {{ talk.when|date:"j F Y" }}<br>
+    Duration: {{ talk.duration }}h<br>
+    Tags: {{ talk.tags|join:", " }}<br>
+    <a href="{% url 'delete_talk' talk.pk %}">delete</a>
     </p>
   </div>
 
@@ -20,12 +22,12 @@
   <p><em>No talks added yet</em></p>
 {% endfor %}
 
-<hr/>
+<hr>
 <form action="." method="post">
 {% csrf_token %}
 
 {{ form.as_p }}
-<input type="submit" value="+ Add talk"/>
+<input type="submit" value="+ Add talk">
 </form>
 </body>
 </html>

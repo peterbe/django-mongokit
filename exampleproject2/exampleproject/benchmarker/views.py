@@ -4,39 +4,43 @@ import datetime
 import random
 from cStringIO import StringIO
 from time import time, sleep
-from pymongo.objectid import ObjectId
+try:
+    from bson import ObjectId
+except ImportError:  # old pymongo
+    from pymongo.objectid import ObjectId
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.timezone import utc
 
-from exampleapp.models import Talk
-from exampleapp_sql.models import Talk as sql_Talk
+from exampleproject.exampleapp.models import Talk
+from exampleproject.exampleapp_sql.models import Talk as sql_Talk
 
 from django_mongokit import get_database
 
 def run(request):
     how_many = int(request.GET.get('how_many', 1))
-    
-    TESTS = (('mongokit', _create_talks, _edit_talks, _delete_talks, 
+
+    TESTS = (('mongokit', _create_talks, _edit_talks, _delete_talks,
               settings.DATABASES['mongodb']['ENGINE']),
-             ('sql', _create_talks_sql, _edit_talks_sql, _delete_talks_sql, 
+             ('sql', _create_talks_sql, _edit_talks_sql, _delete_talks_sql,
               settings.DATABASES['default']['ENGINE']),
              )
-    
+
     response = StringIO()
-    
+
     for label, creator, editor, deletor, engine in TESTS:
         total = 0.0
         print >>response, label, engine
-        
+
         t0=time()
         ids = creator(how_many)
         t1=time()
         total += t1-t0
         print >>response, "Creating", how_many, "talks took", t1-t0, "seconds"
-        
+
         # give it a rest so that the database can internall index all the IDs
         sleep(1)
 
@@ -54,13 +58,13 @@ def run(request):
         t1=time()
         total += t1-t0
         print >>response, "Deleting", how_many, "talks took", t1-t0, "seconds"
-        
-        
+
+
         print >>response, "IN TOTAL", total, "seconds"
         print >>response, "\n"
-        
+
     return HttpResponse(response.getvalue(), mimetype='text/plain')
-    
+
 def __random_topic():
     return random.choice(
         (u'No talks added yet',
@@ -75,10 +79,10 @@ def __random_topic():
         ))
 
 def __random_when():
-    return datetime.datetime(random.randint(2000, 2010), 
-                             random.randint(1, 12), 
-                             random.randint(1, 28), 
-                             0,0,0)
+    return datetime.datetime(random.randint(2000, 2010),
+                             random.randint(1, 12),
+                             random.randint(1, 28),
+                             0, 0, 0).replace(tzinfo=utc)
 
 def __random_tags():
     tags = [u'one', u'two', u'three', u'four', u'five', u'six',
@@ -88,8 +92,8 @@ def __random_tags():
 
 def __random_duration():
     return round(random.random()*10, 1)
-    
-    
+
+
 def _create_talks(how_many):
     # 1 Create 1,000 talks
     collection = get_database()[Talk.collection_name]
@@ -116,8 +120,8 @@ def _delete_talks(ids):
     for id_ in ids:
         talk = collection.Talk.one({'_id': ObjectId(id_)})
         talk.delete()
-        
-    
+
+
 
 def _create_talks_sql(how_many):
     # 1 Create 1,000 talks
@@ -141,9 +145,3 @@ def _edit_talks_sql(ids):
         talk = sql_Talk.objects.get(pk=id_)
         talk.topic += "extra"
         talk.save()
-
-    
-    
-
-
-

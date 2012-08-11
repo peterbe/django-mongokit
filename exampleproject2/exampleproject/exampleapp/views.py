@@ -1,5 +1,8 @@
 import datetime
-from pymongo.objectid import ObjectId
+try:
+    from bson import ObjectId
+except ImportError:  # old pymongo
+    from pymongo.objectid import ObjectId
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.conf import settings
 from django.core.urlresolvers import reverse

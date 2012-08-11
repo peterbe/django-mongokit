@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils.timezone import utc
 
 from models import Talk
 from forms import TalkForm
@@ -16,17 +17,17 @@ def homepage(request):
         if form.is_valid():
             topic = form.cleaned_data['topic']
             w = form.cleaned_data['when']
-            when = datetime.datetime(w.year, w.month, w.day, 0,0,0)
+            when = (datetime.datetime(w.year, w.month, w.day, 0, 0, 0)
+                    .replace(tzinfo=utc))
             tags = form.cleaned_data['tags']
             duration = form.cleaned_data['duration']
             talk = Talk.objects.create(topic=topic, when=when,
                                        tags=tags, duration=duration)
-            
             return HttpResponseRedirect(reverse('homepage'))
     else:
         form = TalkForm()
-            
-    return render_to_response("exampleapp/home.html", locals(), 
+    return render_to_response("exampleapp/home.html",
+                              {'talks': talks, 'form': form},
                               context_instance=RequestContext(request))
 
 

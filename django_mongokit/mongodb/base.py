@@ -130,17 +130,17 @@ class DatabaseCreation(BaseDatabaseCreation):
             self.connection.connection.drop_database(database_name)
 
 
-
-
 class DatabaseWrapper(BaseDatabaseWrapper):
     operators = {}
     _commit = ignore
     _rollback = ignore
 
-    autocommit = None # ignore
+    autocommit = None  # ignore
 
-    def __init__(self, settings_dict, alias=None, # alias was added in Django 1.2
+    def __init__(self, settings_dict, alias=None,  # alias was added in Django 1.2
                  *args, **kwargs):
+        super(DatabaseWrapper, self).__init__(settings_dict, alias=alias, *args, **kwargs)
+
         if settings_dict['HOST']:
             kwargs['host'] = settings_dict['HOST']
         if settings_dict['PORT']:
