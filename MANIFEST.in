@@ -1,0 +1,4 @@
+include INSTALL
+include LICENSE
+include README.md
+include django_mongokit/version.txt
