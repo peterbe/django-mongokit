@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-mongokit',
-    version=open('django_mongokit/version.txt').read(),
+    version=open('django_mongokit/version.txt').read().strip(),
     author="Peter Bengtsson",
     author_email="mail@peterbe.com",
     url="https://github.com/peterbe/django-mongokit",
