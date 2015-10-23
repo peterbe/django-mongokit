@@ -2,7 +2,13 @@
 from django.forms.fields import CharField, ValidationError
 from django.forms.widgets import TextInput, Textarea
 
-from django.utils import simplejson
+try:
+    import json as simplejson
+except ImportError, e:
+    if e.args[0].startswith('No module named json'):
+        from django.utils import simplejson
+    else:
+        raise
 
 
 class JsonField(CharField):
