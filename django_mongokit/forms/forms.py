@@ -1,6 +1,12 @@
 import datetime
 from django import forms
-from django.utils import simplejson
+try:
+    import json as simplejson
+except ImportError, e:
+    if e.args[0].startswith('No module named json'):
+        from django.utils import simplejson
+    else:
+        raise
 
 from django.utils.datastructures import SortedDict
 from django.forms.util import ErrorList
