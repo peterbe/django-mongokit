@@ -1,12 +1,6 @@
 import datetime
 from django import forms
-try:
-    import json as simplejson
-except ImportError, e:
-    if e.args[0].startswith('No module named json'):
-        from django.utils import simplejson
-    else:
-        raise
+import json
 
 from django.utils.datastructures import SortedDict
 from django.forms.util import ErrorList
@@ -54,7 +48,7 @@ def value_from_document(instance, field_name):
 
     # Refactor this into a class for each data type.
     if field_type in [list, dict]:
-        return simplejson.dumps(instance[field_name])
+        return json.dumps(instance[field_name])
 
     return instance[field_name]
 
