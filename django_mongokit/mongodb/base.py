@@ -4,15 +4,27 @@ MongoKit (MongoDB) backend for Django.
 
 from mongokit import Connection
 
-from django.db.backends import (
-    BaseDatabaseOperations,
-    BaseDatabaseClient,
-    BaseDatabaseIntrospection,
-    BaseDatabaseWrapper,
-    BaseDatabaseFeatures,
-    BaseDatabaseValidation
-)
-from django.db.backends.creation import BaseDatabaseCreation
+import django
+
+if django.VERSION < (1, 8):
+    from django.db.backends import (
+        BaseDatabaseOperations,
+        BaseDatabaseClient,
+        BaseDatabaseIntrospection,
+        BaseDatabaseWrapper,
+        BaseDatabaseFeatures,
+        BaseDatabaseValidation
+    )
+    from django.db.backends.creation import BaseDatabaseCreation
+else:
+    from django.db.backends.base.base import BaseDatabaseWrapper
+    from django.db.backends.base.client import BaseDatabaseClient
+    from django.db.backends.base.features import BaseDatabaseFeatures
+    from django.db.backends.base.validation import BaseDatabaseValidation
+    from django.db.backends.base.introspection import BaseDatabaseIntrospection
+    from django.db.backends.base.operations import BaseDatabaseOperations
+    from django.db.backends.base.creation import BaseDatabaseCreation
+
 from django.conf import settings
 
 TEST_DATABASE_PREFIX = 'test_'
