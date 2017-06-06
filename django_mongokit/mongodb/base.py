@@ -164,6 +164,19 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     autocommit = None  # ignore
 
+    # Django >= 1.11
+    class DummyClass():
+        def __init__(self, *args, **kwargs):
+            pass
+
+    client_class = DummyClass
+    creation_class = DummyClass
+    features_class = DummyClass
+    introspection_class = DummyClass
+    ops_class = DummyClass
+    validation_class = DummyClass
+
+
     def __init__(self, settings_dict, alias=None, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(
             settings_dict,
