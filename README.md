@@ -23,7 +23,7 @@ Installation
 Usage/Configuration
 -------------------
 
-First of all you need to define a name of the database and but that
+First of all you need to define a name of the database and put that
 into your `settings.DATABASES` directive. Here's an example:
 
     DATABASES = {
